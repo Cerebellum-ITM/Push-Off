@@ -16,7 +16,7 @@ RUN go mod download
 COPY . .
 
 # Build the Go app
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o runecraftd ./main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o pusgOff ./main.go
 
 # Use a smaller, secure image for the final stage
 FROM alpine:3.22.2
@@ -34,5 +34,5 @@ COPY --from=builder /app/main .
 EXPOSE 23234
 
 # Command to run the executable
-CMD ["./main.go"]
+CMD ["./pushOff"]
 
