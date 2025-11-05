@@ -16,19 +16,19 @@ RUN go mod download
 COPY . .
 
 # Build the Go app
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o pusgOff ./main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o pushOff ./main.go
 
 # Use a smaller, secure image for the final stage
 FROM alpine:3.22.2
 
 # Install openssh-client to get ssh-keygen
-RUN apk add --no-cache openssh-client=10.2p1
+RUN apk add --no-cache openssh-client=10.0_p1-r9
 
 # Set the working directory inside the container
 WORKDIR /root/
 
 # Copy the pre-built binary from the builder stage
-COPY --from=builder /app/main .
+COPY --from=builder /app/pushOff .
 
 # Expose port 23234 to the outside world
 EXPOSE 23234
