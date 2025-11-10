@@ -1,27 +1,72 @@
 package main
 
 import (
+	"context"
+	"errors"
+	"main/internal/server"
+	"net"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
-	"main/internal/app"
-
-	tea "github.com/charmbracelet/bubbletea/v2"
 	"github.com/charmbracelet/log"
+	"github.com/charmbracelet/ssh"
+	"github.com/charmbracelet/wish"
+	"github.com/charmbracelet/wish/activeterm"
+	"github.com/charmbracelet/wish/bubbletea"
+	"github.com/charmbracelet/wish/logging"
+)
+
+const (
+	hostKeyPath        = "/app/keys/ssh_host_key"
+	authorizedKeysPath = "/app/keys/authorized_keys"
+)
+
+const (
+	host = "0.0.0.0"
+	port = "23234"
 )
 
 func main() {
-	initialModel, err := app.NewPushOffModel()
-	if err != nil {
-		log.Fatal("An error occurred while trying to initialize the app model")
-	}
-	p := tea.NewProgram(initialModel, tea.WithOutput(os.Stderr))
 
-	finalModel, err := p.Run()
+	s, err := wish.NewServer(
+		wish.WithAddress(net.JoinHostPort(host, port)),
+		// wish.WithHostKeyPath(hostKeyPath),
+		// wish.WithAuthorizedKeys(authorizedKeysPath),
+
+		// Allocate a pty.
+		// This creates a pseudoconsole on windows, compatibility is limited in
+		// that case, see the open issues for more details.
+		ssh.AllocatePty(),
+		wish.WithMiddleware(
+			// run our Bubble Tea handler
+			bubbletea.Middleware(server.TeaHandler),
+
+			// ensure the user has requested a tty
+			activeterm.Middleware(),
+			logging.Middleware(),
+		),
+	)
 	if err != nil {
-		log.Fatal("Oh no! There was an error", "error", err)
+		log.Error("Could not start server", "error", err)
 	}
 
-	if _, ok := finalModel.(*app.Model); ok {
-		log.Info("The program has ended")
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	log.Info("Starting SSH server", "host", host, "port", port)
+	go func() {
+		if err = s.ListenAndServe(); err != nil && !errors.Is(err, ssh.ErrServerClosed) {
+			log.Error("Could not start server", "error", err)
+			done <- nil
+		}
+	}()
+
+	<-done
+	log.Info("Stopping SSH server")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer func() { cancel() }()
+	if err := s.Shutdown(ctx); err != nil && !errors.Is(err, ssh.ErrServerClosed) {
+		log.Error("Could not stop server", "error", err)
 	}
 }
