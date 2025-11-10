@@ -21,11 +21,17 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o pushOff ./main.go
 # Use a smaller, secure image for the final stage
 FROM alpine:3.22.2
 
-# Install openssh-client to get ssh-keygen
-RUN apk add --no-cache openssh-client=10.0_p1-r9
+# Create keys folder
+RUN mkdir -p /app/keys && chmod 700 /app/keys
+COPY ./authorized_keys /app/keys/authorized_keys
+RUN chmod 600 /app/keys/authorized_keys
+
 
 # Set the working directory inside the container
-WORKDIR /root/
+WORKDIR /app
+
+# Install openssh-client to get ssh-keygen
+RUN apk add --no-cache openssh-client=10.0_p1-r9
 
 # Copy the pre-built binary from the builder stage
 COPY --from=builder /app/pushOff .

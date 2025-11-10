@@ -8,4 +8,6 @@ Makefile
 *.sql
 
 /bin
+/keys
+authorized_keys
 .commitcraft.toml

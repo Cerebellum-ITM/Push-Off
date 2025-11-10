@@ -4,6 +4,10 @@
 # Ignore binaries
 bin/
 
+# keys folder
+keys/
+authorized_keys
+
 # Ignore SSH keys
 id_ed25519
 id_ed25519.pub
