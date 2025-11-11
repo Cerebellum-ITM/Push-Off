@@ -29,11 +29,10 @@ const (
 )
 
 func main() {
-
 	s, err := wish.NewServer(
 		wish.WithAddress(net.JoinHostPort(host, port)),
-		// wish.WithHostKeyPath(hostKeyPath),
-		// wish.WithAuthorizedKeys(authorizedKeysPath),
+		wish.WithHostKeyPath(hostKeyPath),
+		wish.WithAuthorizedKeys(authorizedKeysPath),
 
 		// Allocate a pty.
 		// This creates a pseudoconsole on windows, compatibility is limited in
