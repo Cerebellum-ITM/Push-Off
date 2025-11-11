@@ -4,7 +4,7 @@ services:
     ports:
       - "$PORT:23234"
     volumes:
-      - ./keys:/app/keys
+      - ssh-data:/app/keys
     # depends_on:
       # - db
     env_file:
@@ -20,6 +20,7 @@ services:
     # volumes:
       # - postgres_data:/var/lib/postgresql/data
 
-# volumes:
+volumes:
+  ssh-data:
   # postgres_data:
 

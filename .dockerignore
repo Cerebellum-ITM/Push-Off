@@ -6,7 +6,6 @@ bin/
 
 # keys folder
 keys/
-authorized_keys
 
 # Ignore SSH keys
 id_ed25519
